@@ -1,15 +1,3 @@
-<<<<<<< HEAD
-# OceanWatch
-An mvp for sih_ps_39
-=======
-<<<<<<< HEAD
-# OceanWatch
-An mvp for sih_ps_39
-=======
-<<<<<<< HEAD
-# OceanWatch
-An mvp for sih_ps_39
-=======
 # OceanGuard MVP
 
 A web-based platform for citizens to report oceanic hazards with real-time mapping and geospatial data visualization.
