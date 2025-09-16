@@ -1,10 +1,10 @@
-# OceanGuard MVP
+# OceanWatch MVP
 
 A web-based platform for citizens to report oceanic hazards with real-time mapping and geospatial data visualization.
 
 ## 🌊 Overview
 
-OceanGuard is a community-driven platform that enables citizens to report oceanic hazards such as high waves, coastal flooding, and unusual tides. The system provides real-time mapping capabilities and helps authorities monitor coastal conditions for early warning systems.
+OceanWatch is a community-driven platform that enables citizens to report oceanic hazards such as high waves, coastal flooding, and unusual tides. The system provides real-time mapping capabilities and helps authorities monitor coastal conditions for early warning systems.
 
 ## 🏗️ Architecture
 
@@ -26,7 +26,7 @@ This project uses a monorepo structure with two main packages:
 1. **Clone the repository**
    ```bash
    git clone <repository-url>
-   cd oceanguard-mvp
+   cd OceanWatch
    ```
 
 2. **Install dependencies**
@@ -52,10 +52,10 @@ This project uses a monorepo structure with two main packages:
    nano packages/backend-api/.env
    ```
 
-5. **Initialize the database**
+5. **Run database migration (IMPORTANT - fixes report submission)**
    ```bash
    cd packages/backend-api
-   npm run init-db
+   npm run migrate-db
    cd ../..
    ```
 
@@ -67,6 +67,17 @@ This project uses a monorepo structure with two main packages:
 This will start:
 - Backend API on http://localhost:3001
 - Frontend app on http://localhost:3000
+
+## 🔧 Database Migration
+
+If you're upgrading from an older version, run the migration script to update your database schema:
+
+```bash
+cd packages/backend-api
+npm run migrate-db
+```
+
+This adds the missing fields that were causing "report not submitted" errors.
 
 ## 📁 Project Structure
 
