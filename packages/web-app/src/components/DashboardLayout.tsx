@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import React, { ReactNode, useState } from 'react';
 import { useRouter } from 'next/router';
+import { useAuth } from '@/contexts/AuthContext';
+import Navbar from './Navbar';
+import Icon from '@/components/icons/Icon';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -13,11 +15,11 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, activeTab =
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const navigation = [
-    { name: 'Dashboard', href: '/dashboard', icon: '📊', current: activeTab === 'dashboard' },
-    { name: 'Report Hazard', href: '/report', icon: '⚠️', current: activeTab === 'report' },
-    { name: 'Live Map', href: '/map', icon: '🗺️', current: activeTab === 'map' },
-    { name: 'Analytics', href: '/analytics', icon: '📈', current: activeTab === 'analytics' },
-    { name: 'Profile', href: '/profile', icon: '👤', current: activeTab === 'profile' },
+    { name: 'Dashboard', href: '/dashboard', iconName: 'info', current: activeTab === 'dashboard' },
+    { name: 'Report Hazard', href: '/report', iconName: 'alert-triangle', current: activeTab === 'report' },
+    { name: 'Live Map', href: '/map', iconName: 'map-pin', current: activeTab === 'map' },
+    { name: 'Analytics', href: '/analytics', iconName: 'info', current: activeTab === 'analytics' },
+    { name: 'Profile', href: '/profile', iconName: 'user', current: activeTab === 'profile' },
   ];
 
   const handleLogout = () => {
@@ -50,7 +52,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, activeTab =
           <div className="flex items-center justify-center h-16 px-4 bg-gradient-to-r from-blue-600 to-blue-700">
             <div className="flex items-center space-x-2">
               <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
-                <span className="text-blue-600 font-bold text-lg">🌊</span>
+                <Icon name="shield-alert" size={20} className="text-blue-600" aria-label="Ocean Watch" />
               </div>
               <span className="text-white text-xl font-bold">INCOIS Ocean Watch</span>
             </div>
@@ -68,7 +70,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, activeTab =
                     : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                 }`}
               >
-                <span className="mr-3 text-lg">{item.icon}</span>
+                <Icon name={item.iconName as any} size={20} className="mr-3" aria-label={item.name} />
                 {item.name}
               </button>
             ))}
@@ -95,7 +97,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, activeTab =
               onClick={handleLogout}
               className="w-full flex items-center px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 hover:text-gray-900 rounded-lg transition-colors"
             >
-              <span className="mr-3">🚪</span>
+              <Icon name="x" size={16} className="mr-3" aria-label="Logout" />
               Logout
             </button>
           </div>
@@ -138,14 +140,14 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, activeTab =
                 onClick={() => router.push('/report')}
                 className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center space-x-2"
               >
-                <span>⚠️</span>
+                <Icon name="alert-triangle" size={16} className="text-white" aria-label="Alert" />
                 <span>Report Hazard</span>
               </button>
               <button 
                 onClick={() => router.push('/map')}
                 className="bg-white hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors border border-gray-300 flex items-center space-x-2"
               >
-                <span>📍</span>
+                <Icon name="map-pin" size={16} className="text-gray-700" aria-label="Map" />
                 <span>View Map</span>
               </button>
             </div>

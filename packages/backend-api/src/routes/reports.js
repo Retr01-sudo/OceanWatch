@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const reportController = require('../controllers/reportController');
-const { authenticateToken } = require('../middleware/auth');
+const { authenticateToken, requireOfficial } = require('../middleware/auth');
 const { validateReport } = require('../middleware/validation');
 const upload = require('../middleware/upload');
 
@@ -39,11 +39,25 @@ router.post('/',
 );
 
 /**
- * @route   DELETE /api/reports/:id
- * @desc    Delete a report (only owner or official)
- * @access  Private
+ * @route   PATCH /api/reports/:id/verify
+ * @desc    Verify a report (admin/official only)
+ * @access  Private - Official Role Required
  */
-router.delete('/:id', authenticateToken, reportController.deleteReport);
+router.patch('/:id/verify', authenticateToken, requireOfficial, reportController.verifyReport);
+
+/**
+ * @route   DELETE /api/reports/:id
+ * @desc    Delete a report (admin/official only)
+ * @access  Private - Official Role Required
+ */
+router.delete('/:id', authenticateToken, requireOfficial, reportController.deleteReport);
+
+/**
+ * @route   POST /api/reports/bulk-delete
+ * @desc    Bulk delete multiple reports (admin/official only)
+ * @access  Private - Official Role Required
+ */
+router.post('/bulk-delete', authenticateToken, requireOfficial, reportController.bulkDeleteReports);
 
 module.exports = router;
 

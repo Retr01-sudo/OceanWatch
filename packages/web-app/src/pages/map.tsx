@@ -3,22 +3,15 @@ import { useRouter } from 'next/router';
 import { useAuth } from '@/contexts/AuthContext';
 import { useReports } from '@/contexts/ReportsContext';
 import DashboardLayout from '@/components/DashboardLayout';
-import EnhancedMapDashboard, { FilterSettings } from '@/components/EnhancedMapDashboard';
+import FilteredMapView from '@/components/FilteredMapView';
+import ReportDetailModal from '@/components/ReportDetailModal';
 import { Report } from '@/types';
 
 const MapPage: React.FC = () => {
   const router = useRouter();
   const { user, isLoading } = useAuth();
   const { reports, loading } = useReports();
-  
-  // Filter state management - same as dashboard
-  const [isFilterVisible, setIsFilterVisible] = useState(false);
-  const [filterSettings, setFilterSettings] = useState<FilterSettings>({
-    eventTypes: [],
-    dateRange: 'all',
-    severity: 'all',
-    showVerified: true, // New filter for verified reports
-  });
+  const [selectedReport, setSelectedReport] = useState<Report | null>(null);
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -28,34 +21,9 @@ const MapPage: React.FC = () => {
 
 
   const handleReportClick = (report: Report) => {
+    setSelectedReport(report);
     // You can implement a modal or sidebar for report details here
     console.log('Report clicked:', report);
-  };
-
-  // Filter management functions - same as dashboard
-  const handleFilterChange = (filterType: string, value: any) => {
-    setFilterSettings(prev => ({
-      ...prev,
-      [filterType]: value
-    }));
-  };
-
-  const handleToggleFilter = () => {
-    setIsFilterVisible(prev => !prev);
-  };
-
-  // Filter verified reports for map display
-  const getVerifiedReports = () => {
-    return reports.filter(report => {
-      // Check if report is verified (user_role === 'official')
-      const isVerified = report.user_role === 'official';
-      
-      // Check if showVerified filter is enabled
-      const showVerified = filterSettings.showVerified;
-      
-      // Return true only if report is verified AND showVerified is true
-      return isVerified && showVerified;
-    });
   };
 
   if (isLoading) {
@@ -78,17 +46,19 @@ const MapPage: React.FC = () => {
       </div>
 
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <EnhancedMapDashboard 
+        <FilteredMapView
           onReportClick={handleReportClick}
-          height="70vh"
-          filterSettings={filterSettings}
-          onFilterChange={handleFilterChange}
-          isFilterVisible={isFilterVisible}
-          onToggleFilter={handleToggleFilter}
-          verifiedReports={getVerifiedReports()}
-          allReports={reports}
+          height="calc(100vh - 120px)"
+          showLegend={true}
         />
       </div>
+
+      {/* Report Details Modal */}
+      <ReportDetailModal
+        report={selectedReport}
+        isOpen={!!selectedReport}
+        onClose={() => setSelectedReport(null)}
+      />
     </DashboardLayout>
   );
 };

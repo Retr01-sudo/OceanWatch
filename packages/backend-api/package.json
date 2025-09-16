@@ -6,7 +6,9 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "build": "echo 'No build step required for Node.js'"
+    "build": "echo 'No build step required for Node.js'",
+    "init-db": "node src/config/init-db.js",
+    "migrate-db": "node src/config/migrate-db.js"
   },
   "dependencies": {
     "express": "^4.18.2",

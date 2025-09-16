@@ -19,9 +19,14 @@ const ReportSubmissionForm: React.FC<ReportSubmissionFormProps> = ({
   const { addNotification } = useNotifications();
   const [formData, setFormData] = useState({
     event_type: '' as EventType | '',
+    severity_level: 'Medium',
+    report_language: 'English',
+    brief_title: '',
     description: '',
     latitude: userLocation?.latitude || 0,
     longitude: userLocation?.longitude || 0,
+    phone_number: '',
+    address: '',
   });
   const [image, setImage] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
@@ -107,9 +112,14 @@ const ReportSubmissionForm: React.FC<ReportSubmissionFormProps> = ({
 
       const reportData = {
         event_type: formData.event_type,
+        severity_level: formData.severity_level,
+        report_language: formData.report_language,
+        brief_title: formData.brief_title,
         description: formData.description,
         latitude: formData.latitude,
         longitude: formData.longitude,
+        phone_number: formData.phone_number,
+        address: formData.address,
         image: image || undefined,
       };
 
@@ -127,9 +137,14 @@ const ReportSubmissionForm: React.FC<ReportSubmissionFormProps> = ({
       // Reset form
       setFormData({
         event_type: '',
+        severity_level: 'Medium',
+        report_language: 'English',
+        brief_title: '',
         description: '',
         latitude: userLocation?.latitude || 0,
         longitude: userLocation?.longitude || 0,
+        phone_number: '',
+        address: '',
       });
       setImage(null);
       if (fileInputRef.current) {

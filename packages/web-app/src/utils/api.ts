@@ -81,8 +81,23 @@ export const authAPI = {
 
 // Reports API functions
 export const reportsAPI = {
-  getAllReports: async (bounds?: string): Promise<Report[]> => {
-    const params = bounds ? { bounds } : {};
+  getAllReports: async (filters?: {
+    bounds?: string;
+    severity?: string[];
+    from?: string;
+    to?: string;
+    status?: string;
+    eventType?: string[];
+  }): Promise<Report[]> => {
+    const params: any = {};
+    
+    if (filters?.bounds) params.bounds = filters.bounds;
+    if (filters?.severity?.length) params.severity = filters.severity.join(',');
+    if (filters?.from) params.from = filters.from;
+    if (filters?.to) params.to = filters.to;
+    if (filters?.status) params.status = filters.status;
+    if (filters?.eventType?.length) params.eventType = filters.eventType.join(',');
+    
     const response: AxiosResponse<ApiResponse<ReportsResponse>> = await api.get('/reports', { params });
     
     if (!response.data.success) {
@@ -94,16 +109,26 @@ export const reportsAPI = {
 
   createReport: async (reportData: {
     event_type: string;
+    severity_level?: string;
+    report_language?: string;
+    brief_title?: string;
     description?: string;
     latitude: number;
     longitude: number;
+    phone_number?: string;
+    address?: string;
     image?: File;
   }): Promise<Report> => {
     const formData = new FormData();
     formData.append('event_type', reportData.event_type);
+    formData.append('severity_level', reportData.severity_level || 'Medium');
+    formData.append('report_language', reportData.report_language || 'English');
+    formData.append('brief_title', reportData.brief_title || '');
     formData.append('description', reportData.description || '');
     formData.append('latitude', reportData.latitude.toString());
     formData.append('longitude', reportData.longitude.toString());
+    formData.append('phone_number', reportData.phone_number || '');
+    formData.append('address', reportData.address || '');
     
     if (reportData.image) {
       formData.append('image', reportData.image);
@@ -119,7 +144,7 @@ export const reportsAPI = {
       throw new Error(response.data.message || 'Failed to create report');
     }
     
-    return response.data.data!.report;
+    return response.data.data;
   },
 
   getUserReports: async (): Promise<Report[]> => {
@@ -138,6 +163,18 @@ export const reportsAPI = {
     if (!response.data.success) {
       throw new Error(response.data.message || 'Failed to delete report');
     }
+  },
+
+  bulkDeleteReports: async (reportIds: number[]): Promise<{ summary: any; successful: any[]; failed: any[] }> => {
+    const response: AxiosResponse<ApiResponse<any>> = await api.post('/reports/bulk-delete', {
+      reportIds
+    });
+    
+    if (!response.data.success) {
+      throw new Error(response.data.message || 'Failed to bulk delete reports');
+    }
+    
+    return response.data.data!;
   },
 };
 

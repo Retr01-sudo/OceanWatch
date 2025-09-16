@@ -8,8 +8,9 @@ require('dotenv').config();
 const authRoutes = require('./routes/auth');
 const reportRoutes = require('./routes/reports');
 
-// Import database initialization
-const initDatabase = require('./config/init-db');
+// Database initialization removed from automatic startup
+// Run manually with: npm run init-db
+// const initDatabase = require('./config/init-db');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -82,8 +83,8 @@ app.use((error, req, res, next) => {
 // Start server
 async function startServer() {
   try {
-    // Initialize database
-    await initDatabase();
+    // Database initialization removed - run manually if needed: npm run init-db
+    console.log('⚠️  Database initialization skipped - run "npm run init-db" manually if needed');
     
     app.listen(PORT, () => {
       console.log(`🚀 OceanGuard API server running on port ${PORT}`);

@@ -49,13 +49,17 @@ INSERT INTO users (email, password_hash, role) VALUES
     ('citizen@oceanguard.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'citizen')
 ON CONFLICT (email) DO NOTHING;
 
--- Insert sample reports with enhanced data (Mumbai, Goa, Chennai locations)
-INSERT INTO reports (user_id, event_type, severity_level, report_language, brief_title, description, location, image_url, is_verified) VALUES 
-    (1, 'High Waves', 'High', 'English', 'High waves at Gateway of India', 'Unusually high waves observed near Gateway of India. Water levels rising significantly.', ST_GeogFromText('POINT(72.8347 18.9220)'), NULL, true),
-    (2, 'Coastal Flooding', 'Medium', 'English', 'Coastal flooding in Goa', 'Water level rising in low-lying areas of Baga Beach. Several shops affected.', ST_GeogFromText('POINT(73.8278 15.2993)'), NULL, false),
-    (1, 'Unusual Tide', 'Low', 'English', 'Unusual tide patterns in Chennai', 'Tide levels higher than normal for this time of year. Marina Beach affected.', ST_GeogFromText('POINT(80.2707 13.0827)'), NULL, true),
-    (2, 'Storm Surge', 'Critical', 'English', 'Storm surge warning - Visakhapatnam', 'Strong storm surge observed along the coast. Evacuation recommended.', ST_GeogFromText('POINT(83.2185 17.6868)'), NULL, true),
-    (1, 'Coastal Current', 'Medium', 'English', 'Strong coastal currents - Goa', 'Very strong rip currents observed at Baga Beach. Multiple swimmers had to be rescued.', ST_GeogFromText('POINT(73.8278 15.2993)'), NULL, true)
-ON CONFLICT DO NOTHING;
+-- DUMMY REPORTS REMOVED FOR PRODUCTION
+-- Sample reports have been disabled to prevent fake data insertion
+-- Only real user submissions should create reports in production
+-- 
+-- To re-enable for development/testing, uncomment the INSERT statement below:
+-- INSERT INTO reports (user_id, event_type, severity_level, report_language, brief_title, description, location, image_url, is_verified) VALUES 
+--     (1, 'High Waves', 'High', 'English', 'High waves at Gateway of India', 'Unusually high waves observed near Gateway of India. Water levels rising significantly.', ST_GeogFromText('POINT(72.8347 18.9220)'), NULL, true),
+--     (2, 'Coastal Flooding', 'Medium', 'English', 'Coastal flooding in Goa', 'Water level rising in low-lying areas of Baga Beach. Several shops affected.', ST_GeogFromText('POINT(73.8278 15.2993)'), NULL, false),
+--     (1, 'Unusual Tide', 'Low', 'English', 'Unusual tide patterns in Chennai', 'Tide levels higher than normal for this time of year. Marina Beach affected.', ST_GeogFromText('POINT(80.2707 13.0827)'), NULL, true),
+--     (2, 'Storm Surge', 'Critical', 'English', 'Storm surge warning - Visakhapatnam', 'Strong storm surge observed along the coast. Evacuation recommended.', ST_GeogFromText('POINT(83.2185 17.6868)'), NULL, true),
+--     (1, 'Coastal Current', 'Medium', 'English', 'Strong coastal currents - Goa', 'Very strong rip currents observed at Baga Beach. Multiple swimmers had to be rescued.', ST_GeogFromText('POINT(73.8278 15.2993)'), NULL, true)
+-- ON CONFLICT DO NOTHING;
 
 

@@ -1,0 +1,91 @@
+/**
+ * Z-Index Hierarchy for OceanWatch Application
+ * 
+ * This file documents the z-index layering system to prevent overlay conflicts
+ * and ensure proper stacking order of UI elements.
+ */
+
+/* 
+ * Z-INDEX HIERARCHY:
+ * 
+ * z-[10]  - Map container and base map elements
+ * z-[15]  - Map loading overlays
+ * z-[30]  - Map UI elements (count badge, results summary)
+ * z-[35]  - Map legend (higher priority for visibility)
+ * z-[40]  - Filter panel backdrop
+ * z-[50]  - Filter panel
+ * z-[60]  - Filter panel toggle button
+ * z-[70]  - Modal backdrops
+ * z-[80]  - Modal content (report details, forms)
+ * z-[90]  - Notifications and alerts
+ * z-[100] - Critical system messages
+ */
+
+/* Map Components */
+.map-container {
+  z-index: 10;
+}
+
+.map-loading-overlay {
+  z-index: 15;
+}
+
+.map-count-badge,
+.map-results-summary {
+  z-index: 30;
+}
+
+.map-legend {
+  z-index: 35;
+}
+
+/* Filter System */
+.filter-backdrop {
+  z-index: 40;
+}
+
+.filter-panel {
+  z-index: 50;
+}
+
+.filter-toggle {
+  z-index: 60;
+}
+
+/* Modal System */
+.modal-backdrop {
+  z-index: 70;
+}
+
+.modal-content {
+  z-index: 80;
+}
+
+/* Notifications */
+.notification-container {
+  z-index: 90;
+}
+
+/* Critical Messages */
+.critical-alert {
+  z-index: 100;
+}
+
+/* 
+ * USAGE GUIDELINES:
+ * 
+ * 1. Always use the predefined z-index values from this hierarchy
+ * 2. Use Tailwind's z-[value] syntax for consistency
+ * 3. Map elements should always be at the lowest level (z-[10])
+ * 4. Interactive panels should be above map but below modals
+ * 5. Modals should be at the highest level for user interactions
+ * 6. Test layering on both desktop and mobile devices
+ * 
+ * EXAMPLES:
+ * 
+ * Map container:     className="relative z-[10]"
+ * Map legend:        className="absolute z-[35]"
+ * Filter panel:      className="fixed z-[50]"
+ * Modal backdrop:    className="fixed inset-0 z-[70]"
+ * Modal content:     className="fixed z-[80]"
+ */
