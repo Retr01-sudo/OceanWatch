@@ -1,246 +1,404 @@
-# OceanWatch MVP
+# OceanWatch 🌊
 
-A web-based platform for citizens to report oceanic hazards with real-time mapping and geospatial data visualization.
+**A professional web-based platform for real-time oceanic hazard reporting and monitoring**
 
-## 🌊 Overview
+[![Node.js](https://img.shields.io/badge/Node.js-18%2B-green.svg)](https://nodejs.org/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-12%2B-blue.svg)](https://postgresql.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-14-black.svg)](https://nextjs.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-OceanWatch is a community-driven platform that enables citizens to report oceanic hazards such as high waves, coastal flooding, and unusual tides. The system provides real-time mapping capabilities and helps authorities monitor coastal conditions for early warning systems.
+## Overview
 
-## 🏗️ Architecture
+OceanWatch is a comprehensive full-stack web application designed to enhance coastal safety through community-driven reporting and official monitoring of oceanic hazards. The platform enables citizens and officials to report, track, and manage dangerous marine conditions with precise geolocation data and real-time visualization.
 
-This project uses a monorepo structure with two main packages:
+### Why OceanWatch?
 
-- **backend-api**: Node.js/Express.js API with PostgreSQL and PostGIS
-- **web-app**: Next.js/React frontend with Leaflet mapping
+- **🚨 Early Warning System**: Community-powered hazard detection for faster emergency response
+- **📊 Centralized Monitoring**: Single platform for all oceanic hazard data and analytics
+- **🗺️ Real-time Visualization**: Interactive maps with severity-based color coding
+- **👥 Community Safety**: Connecting citizens, officials, and emergency services
+- **📱 Mobile-First**: Optimized for field reporting and emergency situations
 
-## 🚀 Quick Start
+## ✨ Features
+
+### Core Functionality
+- **Interactive Map Dashboard**: Real-time hazard visualization with PostGIS-powered geospatial queries
+- **Geotagged Reporting**: GPS-accurate hazard reporting with location validation for Indian coastal regions
+- **Role-Based Access Control**: Separate interfaces for citizens and government officials
+- **Severity Classification**: Four-tier system (Low, Medium, High, Critical) with color-coded markers
+- **Report Verification**: Official verification workflow for data accuracy
+- **Real-time Updates**: Live synchronization of new reports and status changes
+
+### Advanced Features
+- **Professional UI**: Government-grade interface with comprehensive icon system
+- **Image Documentation**: Secure file upload with validation and storage
+- **Analytics Dashboard**: Statistical insights and hazard trend analysis
+- **Emergency Contacts**: Quick access to Coast Guard, NDRF, and emergency services
+- **Database Migration**: Safe schema updates and data migration tools
+- **Production-Ready**: No dummy data generation, clean production deployment
+
+### Technical Highlights
+- **PostGIS Integration**: Advanced geospatial data handling and geographic queries
+- **JWT Authentication**: Secure session management with role-based permissions
+- **TypeScript Support**: Type-safe development with comprehensive type definitions
+- **Responsive Design**: Mobile-optimized for field reporting scenarios
+- **RESTful API**: Well-structured API endpoints with proper error handling
+
+## 🚀 Installation
 
 ### Prerequisites
 
-- Node.js 18+ and npm 8+
-- PostgreSQL 12+ with PostGIS extension
-- Git
+**System Requirements:**
+- Node.js 18.0.0+ 
+- npm 8.0.0+
+- PostgreSQL 12.0+ with PostGIS extension
+- Git for version control
 
-### Installation
+### Windows Setup
 
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
+1. **Install Node.js**
+   ```powershell
+   # Download from https://nodejs.org/ (LTS version recommended)
+   # Verify installation
+   node --version
+   npm --version
+   ```
+
+2. **Install PostgreSQL with PostGIS**
+   ```powershell
+   # Download from https://www.postgresql.org/download/windows/
+   # During installation, note your postgres password
+   
+   # Open pgAdmin or psql and run:
+   CREATE EXTENSION IF NOT EXISTS postgis;
+   ```
+
+3. **Clone and Setup Project**
+   ```powershell
+   git clone https://github.com/yourusername/OceanWatch.git
    cd OceanWatch
-   ```
-
-2. **Install dependencies**
-   ```bash
-   npm run install:all
-   ```
-
-3. **Set up the database**
-   ```bash
-   # Create PostgreSQL database
-   createdb oceanguard
    
-   # Enable PostGIS extension
-   psql oceanguard -c "CREATE EXTENSION IF NOT EXISTS postgis;"
-   ```
-
-4. **Configure environment variables**
-   ```bash
-   # Copy environment template
-   cp packages/backend-api/env.example packages/backend-api/.env
+   # Automated setup (recommended)
+   .\setup.sh
    
-   # Edit the .env file with your database credentials
-   nano packages/backend-api/.env
+   # Manual setup alternative:
+   npm install
+   cd packages\backend-api && npm install && cd ..\..
+   cd packages\web-app && npm install && cd ..\..
    ```
 
-5. **Run database migration (IMPORTANT - fixes report submission)**
+### Linux Setup
+
+1. **Install Node.js**
+   ```bash
+   # Ubuntu/Debian
+   curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+   sudo apt-get install -y nodejs
+   
+   # CentOS/RHEL/Fedora
+   curl -fsSL https://rpm.nodesource.com/setup_18.x | sudo bash -
+   sudo dnf install -y nodejs npm
+   
+   # Verify installation
+   node --version && npm --version
+   ```
+
+2. **Install PostgreSQL with PostGIS**
+   ```bash
+   # Ubuntu/Debian
+   sudo apt update
+   sudo apt install postgresql postgresql-contrib postgis postgresql-14-postgis-3
+   
+   # CentOS/RHEL/Fedora
+   sudo dnf install postgresql postgresql-server postgresql-contrib postgis
+   sudo postgresql-setup --initdb
+   sudo systemctl enable --now postgresql
+   ```
+
+3. **Setup Database**
+   ```bash
+   # Create database as postgres user
+   sudo -u postgres createdb oceanguard
+   sudo -u postgres psql oceanguard -c "CREATE EXTENSION IF NOT EXISTS postgis;"
+   ```
+
+4. **Clone and Setup Project**
+   ```bash
+   git clone https://github.com/yourusername/OceanWatch.git
+   cd OceanWatch
+   
+   # Run automated setup
+   chmod +x setup.sh
+   ./setup.sh
+   ```
+
+### Environment Configuration
+
+1. **Configure Backend Environment**
    ```bash
    cd packages/backend-api
-   npm run migrate-db
+   cp env.example .env
+   ```
+
+2. **Edit `.env` with your settings:**
+   ```env
+   # Database Configuration
+   DB_HOST=localhost
+   DB_PORT=5432
+   DB_NAME=oceanguard
+   DB_USER=postgres
+   DB_PASSWORD=your_postgres_password
+   
+   # JWT Security
+   JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
+   JWT_EXPIRES_IN=7d
+   
+   # Server Configuration
+   PORT=3001
+   NODE_ENV=development
+   
+   # File Upload Settings
+   UPLOAD_DIR=uploads
+   MAX_FILE_SIZE=5242880
+   ```
+
+3. **Initialize Database Schema**
+   ```bash
+   # From project root
+   cd packages/backend-api
+   npm run init-db
    cd ../..
    ```
 
-6. **Start the development servers**
+## 🎯 Usage
+
+### Quick Start
+
+1. **Start Development Environment**
    ```bash
+   # Start both backend and frontend concurrently
    npm run dev
+   
+   # Or start services individually:
+   npm run dev:backend   # API server on http://localhost:3001
+   npm run dev:frontend  # Web app on http://localhost:3000
    ```
 
-This will start:
-- Backend API on http://localhost:3001
-- Frontend app on http://localhost:3000
+2. **Access the Application**
+   - **Main Application**: http://localhost:3000
+   - **API Health Check**: http://localhost:3001/health
+   - **API Documentation**: http://localhost:3001/api
 
-## 🔧 Database Migration
+### Demo Accounts
 
-If you're upgrading from an older version, run the migration script to update your database schema:
+```
+👤 Citizen Account:
+   Email: citizen@oceanguard.com
+   Password: password
 
-```bash
-cd packages/backend-api
-npm run migrate-db
+🏛️ Official Account:
+   Email: admin@oceanguard.com
+   Password: password
 ```
 
-This adds the missing fields that were causing "report not submitted" errors.
+### API Reference
+
+#### Authentication Endpoints
+```bash
+POST /api/auth/register    # User registration
+POST /api/auth/login       # User authentication
+GET  /api/auth/profile     # Get user profile
+```
+
+#### Report Management
+```bash
+GET    /api/reports        # Fetch all reports
+POST   /api/reports        # Create new report
+GET    /api/reports/:id    # Get specific report
+PUT    /api/reports/:id    # Update report (officials only)
+DELETE /api/reports/:id    # Delete report (admin only)
+```
+
+### Production Deployment
+
+```bash
+# Build applications for production
+npm run build
+
+# Start production servers
+cd packages/backend-api && npm start &
+cd packages/web-app && npm start &
+```
+
+## ⚙️ Configuration
+
+### Environment Variables
+
+| Variable | Description | Default | Required |
+|----------|-------------|---------|----------|
+| `DB_HOST` | PostgreSQL server host | localhost | ✅ |
+| `DB_PORT` | PostgreSQL server port | 5432 | ✅ |
+| `DB_NAME` | Database name | oceanguard | ✅ |
+| `DB_USER` | Database username | postgres | ✅ |
+| `DB_PASSWORD` | Database password | - | ✅ |
+| `JWT_SECRET` | JWT signing secret | - | ✅ |
+| `JWT_EXPIRES_IN` | Token expiration time | 7d | ❌ |
+| `PORT` | API server port | 3001 | ❌ |
+| `NODE_ENV` | Environment mode | development | ❌ |
+| `UPLOAD_DIR` | File upload directory | uploads | ❌ |
+| `MAX_FILE_SIZE` | Max upload size (bytes) | 5242880 | ❌ |
+
+### Database Management
+
+```bash
+# Initialize fresh database with schema
+npm run init-db
+
+# Migrate existing database to latest schema
+npm run migrate-db
+
+# Reset database (⚠️ destructive operation)
+npm run init-db  # Will prompt for confirmation
+```
 
 ## 📁 Project Structure
 
 ```
-oceanguard-mvp/
-├── packages/
-│   ├── backend-api/          # Express.js API server
-│   │   ├── src/
-│   │   │   ├── config/       # Database and app configuration
-│   │   │   ├── controllers/  # Route controllers
-│   │   │   ├── middleware/   # Auth, validation, upload middleware
-│   │   │   ├── models/       # Database models
-│   │   │   ├── routes/       # API routes
-│   │   │   └── server.js     # Main server file
-│   │   └── package.json
-│   └── web-app/              # Next.js frontend
-│       ├── src/
-│       │   ├── components/   # React components
-│       │   ├── contexts/     # React contexts (Auth)
-│       │   ├── pages/        # Next.js pages
-│       │   ├── types/        # TypeScript type definitions
-│       │   └── utils/        # Utility functions
-│       └── package.json
-└── package.json              # Root package.json with workspaces
+OceanWatch/
+├── 📁 packages/
+│   ├── 📁 backend-api/              # Express.js REST API
+│   │   ├── 📁 src/
+│   │   │   ├── 📁 config/          # Database & app configuration
+│   │   │   │   ├── init-db.js      # Database initialization
+│   │   │   │   ├── migrate-db.js   # Schema migration tool
+│   │   │   │   └── schema.sql      # PostgreSQL schema with PostGIS
+│   │   │   ├── 📁 controllers/     # Request handlers
+│   │   │   ├── 📁 middleware/      # Express middleware
+│   │   │   ├── 📁 models/          # Database models
+│   │   │   ├── 📁 routes/          # API route definitions
+│   │   │   ├── 📁 services/        # Business logic layer
+│   │   │   └── server.js           # Main application server
+│   │   ├── 📁 tests/               # API test suites
+│   │   ├── 📁 uploads/             # File storage directory
+│   │   └── env.example             # Environment template
+│   └── 📁 web-app/                 # Next.js frontend application
+│       ├── 📁 src/
+│       │   ├── 📁 components/      # Reusable React components
+│       │   │   ├── 📁 icons/       # Professional icon system
+│       │   │   ├── MapView.tsx     # Interactive map component
+│       │   │   ├── DashboardLayout.tsx
+│       │   │   └── ...             # Feature-specific components
+│       │   ├── 📁 contexts/        # React context providers
+│       │   ├── 📁 pages/           # Next.js page components
+│       │   │   ├── dashboard.tsx   # Main dashboard interface
+│       │   │   ├── report.tsx      # Report submission page
+│       │   │   └── map.tsx         # Full-screen map view
+│       │   ├── 📁 services/        # API integration services
+│       │   ├── 📁 styles/          # Global CSS and Tailwind
+│       │   ├── 📁 types/           # TypeScript type definitions
+│       │   └── 📁 utils/           # Helper functions
+│       └── 📁 public/              # Static assets
+├── 📄 setup.sh                     # Automated setup script
+├── 📄 test-report-submission.js    # Testing utilities
+├── 📄 package.json                 # Workspace configuration
+└── 📚 Documentation/               # Project documentation
+    ├── MAP_SYSTEM_DOCUMENTATION.md
+    ├── CRITICAL_FIXES_DOCUMENTATION.md
+    └── UI_IMPROVEMENTS_DOCUMENTATION.md
 ```
 
-## 🔧 Configuration
+### Architecture Overview
 
-### Backend Configuration
-
-Edit `packages/backend-api/.env`:
-
-```env
-# Database Configuration
-DB_HOST=localhost
-DB_PORT=5432
-DB_NAME=oceanguard
-DB_USER=postgres
-DB_PASSWORD=your_password
-
-# JWT Configuration
-JWT_SECRET=your-super-secret-jwt-key
-JWT_EXPIRES_IN=7d
-
-# Server Configuration
-PORT=3001
-NODE_ENV=development
-
-# File Upload Configuration
-UPLOAD_DIR=uploads
-MAX_FILE_SIZE=5242880
-```
-
-### Frontend Configuration
-
-The frontend automatically connects to the backend API. If you need to change the API URL, edit `packages/web-app/src/utils/api.ts`.
-
-## 🗄️ Database Schema
-
-### Users Table
-- `id`: Primary key
-- `email`: Unique email address
-- `password_hash`: Bcrypt hashed password
-- `role`: 'citizen' or 'official'
-- `created_at`: Timestamp
-
-### Reports Table
-- `id`: Primary key
-- `user_id`: Foreign key to users table
-- `event_type`: Type of hazard (High Waves, Coastal Flooding, etc.)
-- `description`: Optional description
-- `image_url`: Optional image file path
-- `location`: PostGIS geography point (lat/lng)
-- `created_at`: Timestamp
-
-## 🔌 API Endpoints
-
-### Authentication
-- `POST /api/auth/register` - Register new user
-- `POST /api/auth/login` - Login user
-- `GET /api/auth/profile` - Get current user profile
-
-### Reports
-- `GET /api/reports` - Get all reports (public)
-- `GET /api/reports/my` - Get user's reports (authenticated)
-- `GET /api/reports/:id` - Get specific report
-- `POST /api/reports` - Create new report (authenticated)
-- `DELETE /api/reports/:id` - Delete report (owner or official)
-
-## 🎯 Features
-
-### Current MVP Features
-- ✅ User registration and authentication
-- ✅ JWT-based session management
-- ✅ Report submission with geotagging
-- ✅ Image upload support
-- ✅ Interactive map with Leaflet
-- ✅ Real-time report visualization
-- ✅ Role-based access (citizen/official)
-- ✅ Responsive design with Tailwind CSS
-
-### Planned Features
-- 📊 Analytics dashboard for officials
-- 🔔 Push notifications for nearby hazards
-- 📱 Mobile app
-- 🌐 Multi-language support
-- 📈 Historical data analysis
-- 🚨 Emergency alert system
-
-## 🧪 Testing
-
-### Demo Credentials
-- **Citizen**: `citizen@oceanguard.com` / `password`
-- **Official**: `admin@oceanguard.com` / `password`
-
-### Sample Data
-The database initialization script includes sample reports for Mumbai, Goa, and Chennai to demonstrate the mapping functionality.
-
-## 🚀 Deployment
-
-### Backend Deployment
-1. Set up PostgreSQL with PostGIS on your server
-2. Configure environment variables for production
-3. Run database migrations
-4. Deploy with PM2 or similar process manager
-
-### Frontend Deployment
-1. Build the Next.js application: `npm run build`
-2. Deploy to Vercel, Netlify, or your preferred hosting platform
-3. Update API URLs for production
+- **Backend**: Express.js REST API with PostgreSQL/PostGIS database
+- **Frontend**: Next.js React application with TypeScript
+- **Database**: PostgreSQL with PostGIS for geospatial data
+- **Authentication**: JWT-based with role-based access control
+- **File Storage**: Local filesystem with Multer middleware
+- **Maps**: Leaflet with OpenStreetMap tiles and custom markers
 
 ## 🤝 Contributing
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
+### Development Workflow
+
+1. **Fork & Clone**
+   ```bash
+   git clone https://github.com/yourusername/OceanWatch.git
+   cd OceanWatch
+   ```
+
+2. **Create Feature Branch**
+   ```bash
+   git checkout -b feature/your-feature-name
+   ```
+
+3. **Development Setup**
+   ```bash
+   # Install dependencies
+   npm install
+   
+   # Start development environment
+   npm run dev
+   ```
+
+4. **Code Quality**
+   ```bash
+   # Backend testing
+   cd packages/backend-api && npm test
+   
+   # Frontend linting
+   cd packages/web-app && npm run lint
+   ```
+
+5. **Submit Pull Request**
+   - Clear description of changes
+   - Include screenshots for UI modifications
+   - Reference related issues
+   - Ensure all tests pass
+
+### Coding Standards
+
+- **Backend**: Node.js best practices, ESLint configuration
+- **Frontend**: React/Next.js conventions, TypeScript strict mode
+- **Database**: Proper SQL formatting, indexing strategies
+- **Git**: Conventional commit messages (`feat:`, `fix:`, `docs:`)
+
+### Issue Guidelines
+
+Include in bug reports:
+- Environment details (OS, Node.js, PostgreSQL versions)
+- Reproduction steps
+- Expected vs actual behavior
+- Error logs and screenshots
+- Browser information (for frontend issues)
 
 ## 📄 License
 
-This project is licensed under the MIT License.
+This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for complete details.
 
-## 🆘 Support
+## 🙏 Acknowledgments
 
-For support and questions:
-- Create an issue in the repository
-- Check the documentation
-- Review the API endpoints
+### Core Technologies
+- **[Express.js](https://expressjs.com/)** - Fast, unopinionated web framework
+- **[Next.js](https://nextjs.org/)** - Production-ready React framework
+- **[PostgreSQL](https://postgresql.org/)** - Advanced open-source database
+- **[PostGIS](https://postgis.net/)** - Spatial database extension
+- **[Leaflet](https://leafletjs.com/)** - Open-source interactive maps
+- **[Tailwind CSS](https://tailwindcss.com/)** - Utility-first CSS framework
 
-## 🔮 Future Roadmap
+### Development Tools
+- **[TypeScript](https://typescriptlang.org/)** - Type-safe JavaScript
+- **[React](https://reactjs.org/)** - Component-based UI library
+- **[Axios](https://axios-http.com/)** - HTTP client library
+- **[Multer](https://github.com/expressjs/multer)** - File upload middleware
+- **[JWT](https://jwt.io/)** - JSON Web Token standard
 
-- [ ] Mobile application (React Native)
-- [ ] Advanced analytics and reporting
-- [ ] Integration with weather APIs
-- [ ] Machine learning for hazard prediction
-- [ ] Multi-tenant support for different regions
-- [ ] Real-time notifications via WebSocket
-- [ ] Advanced mapping features (heatmaps, clustering)
-- [ ] Export functionality for reports
-- [ ] API rate limiting and caching
-- [ ] Comprehensive testing suite
+### Data Sources
+- **[OpenStreetMap](https://openstreetmap.org/)** - Collaborative mapping data
+- **[Nominatim](https://nominatim.org/)** - Geocoding service
+- **[Lucide](https://lucide.dev/)** - Beautiful icon library
 
->>>>>>> 44c58e3 (Skeleton_ocenwatch)
->>>>>>> cafdbd91 (Initial commit)
->>>>>>> 095903e4 (initial commit)
+---
+
+**🌊 Built with passion for ocean safety and community protection**
+
+*For support, questions, or feature requests, please [open an issue](https://github.com/yourusername/OceanWatch/issues) or contact our development team.*
