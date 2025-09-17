@@ -3,14 +3,17 @@ const path = require('path');
 const pool = require('./database');
 
 /**
- * Initialize the database with schema and sample data
+ * Initialize the database with schema ONLY - NO sample data
+ * 
+ * PRODUCTION SAFE: This script only creates tables and users.
+ * It does NOT create any dummy reports.
  */
 async function initDatabase() {
   try {
     console.log('Initializing database...');
     
     // Read and execute schema file
-    const schemaPath = path.join(__dirname, 'schema.sql');
+    const schemaPath = path.join(__dirname, 'schema-updated.sql');
     const schema = fs.readFileSync(schemaPath, 'utf8');
     
     // Split by semicolon and execute each statement
@@ -23,6 +26,9 @@ async function initDatabase() {
     }
     
     console.log('Database initialized successfully!');
+    console.log('✅ Tables created');
+    console.log('✅ User accounts created');
+    console.log('✅ NO dummy reports created (production safe)');
   } catch (error) {
     console.error('Error initializing database:', error);
     throw error;

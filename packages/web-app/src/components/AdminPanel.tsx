@@ -1,6 +1,27 @@
 import React, { useState } from 'react';
 import { Report } from '@/types';
 import { useNotifications } from '@/contexts/NotificationContext';
+import { useReports } from '@/contexts/ReportsContext';
+import AdminDeleteModal from './AdminDeleteModal';
+
+/**
+ * IMPORTANT: Report Verification Logic
+ * 
+ * This component has been fixed to use the actual database `is_verified` field
+ * instead of making assumptions based on user roles.
+ * 
+ * KEY CHANGES:
+ * 1. getStatusBadge() now checks `report.is_verified` instead of `user_role === 'official'`
+ * 2. Verify button shows for `!report.is_verified` instead of `user_role !== 'official'`
+ * 3. handleVerifyReport() calls the new PATCH /api/reports/:id/verify endpoint
+ * 4. Verification updates the actual `is_verified` field in the database
+ * 
+ * This ensures:
+ * - Admin reports are NOT automatically shown as verified
+ * - Only explicitly verified reports show the "Verified" badge
+ * - Filtering works correctly based on actual database state
+ * - No UI-side assumptions about verification status
+ */
 
 interface AdminPanelProps {
   reports: Report[];
@@ -10,24 +31,38 @@ interface AdminPanelProps {
 const AdminPanel: React.FC<AdminPanelProps> = ({ reports, onReportUpdate }) => {
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   const [isVerifying, setIsVerifying] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [reportToDelete, setReportToDelete] = useState<Report | null>(null);
+  const [selectedReports, setSelectedReports] = useState<number[]>([]);
+  const [bulkDeleteModalOpen, setBulkDeleteModalOpen] = useState(false);
   const { addNotification } = useNotifications();
+  const { deleteReportFromServer, bulkDeleteReports } = useReports();
 
   const handleVerifyReport = async (reportId: number) => {
     setIsVerifying(true);
     try {
-      // Here you would make an API call to update the report status
-      // For now, we'll simulate the API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Make API call to verify the report (update is_verified field)
+      const response = await fetch(`http://localhost:3001/api/reports/${reportId}/verify`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to verify report');
+      }
       
       addNotification({
         type: 'success',
         title: 'Report Verified',
-        message: 'The report has been successfully verified and marked as official.',
+        message: 'The report has been successfully verified in the database.',
       });
 
-      // Update the report in the parent component
+      // Update the report in the parent component with actual verification status
       if (onReportUpdate) {
-        onReportUpdate(reportId, { user_role: 'official' });
+        onReportUpdate(reportId, { is_verified: true });
       }
     } catch (error) {
       addNotification({
@@ -40,25 +75,21 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ reports, onReportUpdate }) => {
     }
   };
 
-  const handleDeleteReport = async (reportId: number) => {
-    if (!confirm('Are you sure you want to delete this report? This action cannot be undone.')) {
-      return;
-    }
+  const handleDeleteReport = (report: Report) => {
+    setReportToDelete(report);
+    setDeleteModalOpen(true);
+  };
+
+  const confirmDeleteReport = async () => {
+    if (!reportToDelete) return;
 
     try {
-      // Here you would make an API call to delete the report
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
+      await deleteReportFromServer(reportToDelete.id);
       addNotification({
         type: 'success',
         title: 'Report Deleted',
         message: 'The report has been successfully deleted.',
       });
-
-      // Remove the report from the list
-      if (onReportUpdate) {
-        onReportUpdate(reportId, { id: -1 }); // Mark for removal
-      }
     } catch (error) {
       addNotification({
         type: 'error',
@@ -68,27 +99,78 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ reports, onReportUpdate }) => {
     }
   };
 
-  const getSeverityBadge = (eventType: string) => {
-    const isHighSeverity = eventType === 'High Waves' || eventType === 'Coastal Flooding';
+  const handleBulkDelete = () => {
+    if (selectedReports.length === 0) {
+      addNotification({
+        type: 'warning',
+        title: 'No Reports Selected',
+        message: 'Please select reports to delete.',
+      });
+      return;
+    }
+    setBulkDeleteModalOpen(true);
+  };
+
+  const confirmBulkDelete = async () => {
+    try {
+      await bulkDeleteReports(selectedReports);
+      addNotification({
+        type: 'success',
+        title: 'Reports Deleted',
+        message: `Successfully deleted ${selectedReports.length} reports.`,
+      });
+      setSelectedReports([]);
+    } catch (error) {
+      addNotification({
+        type: 'error',
+        title: 'Bulk Deletion Failed',
+        message: 'Failed to delete some reports. Please try again.',
+      });
+    }
+  };
+
+  const toggleReportSelection = (reportId: number) => {
+    setSelectedReports(prev => 
+      prev.includes(reportId) 
+        ? prev.filter(id => id !== reportId)
+        : [...prev, reportId]
+    );
+  };
+
+  const selectAllReports = () => {
+    setSelectedReports(reports.map(r => r.id));
+  };
+
+  const clearSelection = () => {
+    setSelectedReports([]);
+  };
+
+  const getSeverityBadge = (severity: string) => {
+    const severityColors = {
+      'Critical': 'bg-red-100 text-red-800',
+      'High': 'bg-orange-100 text-orange-800', 
+      'Medium': 'bg-yellow-100 text-yellow-800',
+      'Low': 'bg-green-100 text-green-800'
+    };
+    
     return (
       <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-        isHighSeverity 
-          ? 'bg-red-100 text-red-800' 
-          : 'bg-yellow-100 text-yellow-800'
+        severityColors[severity as keyof typeof severityColors] || 'bg-gray-100 text-gray-800'
       }`}>
-        {isHighSeverity ? 'High Severity' : 'Medium Severity'}
+        {severity || 'Medium'}
       </span>
     );
   };
 
-  const getStatusBadge = (userRole: string) => {
+  // Display verification status based on actual database is_verified field
+  const getStatusBadge = (report: Report) => {
     return (
       <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-        userRole === 'official' 
+        report.is_verified === true
           ? 'bg-green-100 text-green-800' 
           : 'bg-gray-100 text-gray-800'
       }`}>
-        {userRole === 'official' ? 'Verified' : 'Pending'}
+        {report.is_verified === true ? 'Verified' : 'Unverified'}
       </span>
     );
   };
@@ -106,8 +188,44 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ reports, onReportUpdate }) => {
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200">
       <div className="p-6 border-b border-gray-200">
-        <h3 className="text-lg font-semibold text-gray-900">Admin Panel</h3>
-        <p className="text-sm text-gray-600 mt-1">Manage and verify hazard reports</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900">Admin Panel</h3>
+            <p className="text-sm text-gray-600 mt-1">Manage and verify hazard reports</p>
+          </div>
+          
+          {/* Bulk Actions */}
+          <div className="flex items-center space-x-3">
+            {selectedReports.length > 0 && (
+              <div className="flex items-center space-x-2">
+                <span className="text-sm text-gray-600">
+                  {selectedReports.length} selected
+                </span>
+                <button
+                  onClick={handleBulkDelete}
+                  className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded transition-colors"
+                >
+                  Delete Selected
+                </button>
+                <button
+                  onClick={clearSelection}
+                  className="px-3 py-1 bg-gray-300 hover:bg-gray-400 text-gray-700 text-sm font-medium rounded transition-colors"
+                >
+                  Clear
+                </button>
+              </div>
+            )}
+            
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={selectAllReports}
+                className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded transition-colors"
+              >
+                Select All
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
       
       <div className="p-6">
@@ -118,26 +236,36 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ reports, onReportUpdate }) => {
               className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors"
             >
               <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center space-x-2 mb-2">
-                    <h4 className="font-medium text-gray-900">{report.event_type}</h4>
-                    {getSeverityBadge(report.event_type)}
-                    {getStatusBadge(report.user_role)}
-                  </div>
+                <div className="flex items-start space-x-3">
+                  {/* Checkbox for bulk selection */}
+                  <input
+                    type="checkbox"
+                    checked={selectedReports.includes(report.id)}
+                    onChange={() => toggleReportSelection(report.id)}
+                    className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
                   
-                  {report.description && (
-                    <p className="text-sm text-gray-600 mb-2">{report.description}</p>
-                  )}
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <h4 className="font-medium text-gray-900">{report.event_type}</h4>
+                      {getSeverityBadge(report.severity_level || 'Medium')}
+                      {getStatusBadge(report)}
+                    </div>
                   
-                  <div className="text-xs text-gray-500 space-y-1">
-                    <p><strong>Reported by:</strong> {report.user_email}</p>
-                    <p><strong>Date:</strong> {formatDate(report.created_at)}</p>
-                    <p><strong>Location:</strong> {report.location ? `${report.location.latitude.toFixed(4)}, ${report.location.longitude.toFixed(4)}` : 'Location not available'}</p>
+                    {report.description && (
+                      <p className="text-sm text-gray-600 mb-2">{report.description}</p>
+                    )}
+                    
+                    <div className="text-xs text-gray-500 space-y-1">
+                      <p><strong>Reported by:</strong> {report.user_email}</p>
+                      <p><strong>Date:</strong> {formatDate(report.created_at)}</p>
+                      <p><strong>Location:</strong> {report.location ? `${report.location.latitude.toFixed(4)}, ${report.location.longitude.toFixed(4)}` : 'Location not available'}</p>
+                    </div>
                   </div>
                 </div>
                 
                 <div className="flex flex-col space-y-2 ml-4">
-                  {report.user_role !== 'official' && (
+                  {!report.is_verified && (
                     <button
                       onClick={() => handleVerifyReport(report.id)}
                       disabled={isVerifying}
@@ -148,7 +276,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ reports, onReportUpdate }) => {
                   )}
                   
                   <button
-                    onClick={() => handleDeleteReport(report.id)}
+                    onClick={() => handleDeleteReport(report)}
                     className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-xs font-medium rounded transition-colors"
                   >
                     Delete
@@ -166,6 +294,26 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ reports, onReportUpdate }) => {
           ))}
         </div>
       </div>
+
+      {/* Admin Delete Modals */}
+      <AdminDeleteModal
+        isOpen={deleteModalOpen}
+        onClose={() => {
+          setDeleteModalOpen(false);
+          setReportToDelete(null);
+        }}
+        onConfirm={confirmDeleteReport}
+        report={reportToDelete || undefined}
+        type="single"
+      />
+
+      <AdminDeleteModal
+        isOpen={bulkDeleteModalOpen}
+        onClose={() => setBulkDeleteModalOpen(false)}
+        onConfirm={confirmBulkDelete}
+        reports={reports.filter(r => selectedReports.includes(r.id))}
+        type="bulk"
+      />
 
       {/* Report Details Modal */}
       {selectedReport && (
@@ -190,17 +338,17 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ reports, onReportUpdate }) => {
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Event Type</label>
-                    <p className="mt-1 text-sm text-gray-900">{selectedReport.event_type}</p>
+                    <p className="mt-1 text-sm text-gray-900">{selectedReport?.event_type}</p>
                   </div>
                   
-                  {selectedReport.description && (
+                  {selectedReport?.description && (
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Description</label>
                       <p className="mt-1 text-sm text-gray-900">{selectedReport.description}</p>
                     </div>
                   )}
                   
-                  {selectedReport.image_url && (
+                  {selectedReport?.image_url && (
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Image</label>
                       <img
@@ -214,18 +362,18 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ reports, onReportUpdate }) => {
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Location</label>
                     <p className="mt-1 text-sm text-gray-900">
-                      {selectedReport.location ? `${selectedReport.location.latitude.toFixed(6)}, ${selectedReport.location.longitude.toFixed(6)}` : 'Location not available'}
+                      {selectedReport?.location ? `${selectedReport.location.latitude.toFixed(6)}, ${selectedReport.location.longitude.toFixed(6)}` : 'Location not available'}
                     </p>
                   </div>
                   
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Reporter</label>
-                    <p className="mt-1 text-sm text-gray-900">{selectedReport.user_email}</p>
+                    <p className="mt-1 text-sm text-gray-900">{selectedReport?.user_email}</p>
                   </div>
                   
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Date</label>
-                    <p className="mt-1 text-sm text-gray-900">{formatDate(selectedReport.created_at)}</p>
+                    <p className="mt-1 text-sm text-gray-900">{formatDate(selectedReport?.created_at || '')}</p>
                   </div>
                 </div>
               </div>

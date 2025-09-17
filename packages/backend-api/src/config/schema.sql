@@ -36,10 +36,14 @@ INSERT INTO users (email, password_hash, role) VALUES
     ('citizen@oceanguard.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'citizen')
 ON CONFLICT (email) DO NOTHING;
 
--- Insert sample reports (Mumbai, Goa, Chennai locations)
-INSERT INTO reports (user_id, event_type, description, location, image_url) VALUES 
-    (1, 'High Waves', 'Unusually high waves observed near Gateway of India', ST_GeogFromText('POINT(72.8347 18.9220)'), NULL),
-    (2, 'Coastal Flooding', 'Water level rising in low-lying areas', ST_GeogFromText('POINT(73.8278 15.2993)'), NULL),
-    (1, 'Unusual Tide', 'Tide levels higher than normal for this time of year', ST_GeogFromText('POINT(80.2707 13.0827)'), NULL)
-ON CONFLICT DO NOTHING;
+-- DUMMY REPORTS REMOVED FOR PRODUCTION
+-- Sample reports have been disabled to prevent fake data insertion
+-- Only real user submissions should create reports in production
+--
+-- To re-enable for development/testing, uncomment the INSERT statement below:
+-- INSERT INTO reports (user_id, event_type, description, location, image_url) VALUES 
+--     (1, 'High Waves', 'Unusually high waves observed near Gateway of India', ST_GeogFromText('POINT(72.8347 18.9220)'), NULL),
+--     (2, 'Coastal Flooding', 'Water level rising in low-lying areas', ST_GeogFromText('POINT(73.8278 15.2993)'), NULL),
+--     (1, 'Unusual Tide', 'Tide levels higher than normal for this time of year', ST_GeogFromText('POINT(80.2707 13.0827)'), NULL)
+-- ON CONFLICT DO NOTHING;
 

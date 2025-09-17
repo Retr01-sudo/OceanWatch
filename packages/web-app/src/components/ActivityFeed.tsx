@@ -1,5 +1,22 @@
 import React from 'react';
 import { Report } from '@/types';
+import { getSeverityColor } from '@/constants/severity';
+
+/**
+ * CRITICAL FIX: Activity Feed Verification Display
+ * 
+ * ISSUE RESOLVED: This component was incorrectly showing "Verified" badges
+ * based on `user_role === 'official'` instead of the actual `is_verified` field.
+ * 
+ * BEFORE: report.user_role === 'official' (WRONG - caused admin reports to show as verified)
+ * AFTER: report.is_verified (CORRECT - shows actual database verification status)
+ * 
+ * This ensures:
+ * - Only reports explicitly verified in DB show "Verified" badge
+ * - Admin reports don't auto-show as verified unless actually verified
+ * - Activity feed matches actual database state
+ * - Filtering logic works correctly
+ */
 
 interface ActivityFeedProps {
   reports: Report[];
@@ -7,29 +24,6 @@ interface ActivityFeedProps {
 }
 
 const ActivityFeed: React.FC<ActivityFeedProps> = ({ reports, onReportClick }) => {
-  const getSeverityColor = (eventType: string) => {
-    switch (eventType) {
-      case 'High Waves':
-      case 'Coastal Flooding':
-        return 'text-red-600 bg-red-100';
-      case 'Unusual Tide':
-        return 'text-yellow-600 bg-yellow-100';
-      default:
-        return 'text-blue-600 bg-blue-100';
-    }
-  };
-
-  const getSeverityText = (eventType: string) => {
-    switch (eventType) {
-      case 'High Waves':
-      case 'Coastal Flooding':
-        return 'High Severity';
-      case 'Unusual Tide':
-        return 'Medium Severity';
-      default:
-        return 'Low Severity';
-    }
-  };
 
   const formatTimeAgo = (dateString: string) => {
     const now = new Date();
@@ -63,11 +57,10 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({ reports, onReportClick }) =
             >
               <div className="flex-shrink-0">
                 <div className={`w-2 h-2 rounded-full mt-2 ${
-                  report.event_type === 'High Waves' || report.event_type === 'Coastal Flooding' 
-                    ? 'bg-red-500' 
-                    : report.event_type === 'Unusual Tide' 
-                    ? 'bg-yellow-500' 
-                    : 'bg-blue-500'
+                  report.severity_level === 'Critical' ? 'bg-red-500' :
+                  report.severity_level === 'High' ? 'bg-orange-500' :
+                  report.severity_level === 'Medium' ? 'bg-yellow-500' :
+                  'bg-green-500'
                 }`}></div>
               </div>
               <div className="flex-1 min-w-0">
@@ -75,7 +68,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({ reports, onReportClick }) =
                   <p className="text-sm font-medium text-gray-900 truncate">
                     {report.description || report.event_type}
                   </p>
-                  {report.user_role === 'official' && (
+                  {report.is_verified && (
                     <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
                       Verified
                     </span>
@@ -84,8 +77,8 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({ reports, onReportClick }) =
                 <div className="flex items-center space-x-2 mt-1">
                   <span className="text-sm text-gray-500">{report.event_type}</span>
                   <span className="text-gray-300">•</span>
-                  <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getSeverityColor(report.event_type)}`}>
-                    {getSeverityText(report.event_type)}
+                  <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getSeverityColor(report.severity_level || 'Medium')}`}>
+                    {report.severity_level || 'Medium'}
                   </span>
                 </div>
                 <p className="text-xs text-gray-400 mt-1">{formatTimeAgo(report.created_at)}</p>

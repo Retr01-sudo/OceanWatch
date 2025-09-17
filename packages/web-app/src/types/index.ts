@@ -58,5 +58,5 @@ export interface ReportsResponse {
   reports: Report[];
 }
 
-export type EventType = 'Tsunami' | 'Storm Surge' | 'High Waves' | 'Swell Surge' | 'Coastal Current' | 'Coastal Flooding' | 'Coastal Damage' | 'Unusual Tide';
+export type EventType = 'Tsunami' | 'Storm Surge' | 'High Waves' | 'Swell Surge' | 'Coastal Current' | 'Coastal Flooding' | 'Coastal Damage' | 'Unusual Tide' | 'Other';
 

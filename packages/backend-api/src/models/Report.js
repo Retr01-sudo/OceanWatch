@@ -11,10 +11,9 @@ class Report {
         eventType,
         severityLevel = 'Medium',
         reportLanguage = 'English',
-        briefTitle,
-        description,
-        latitude,
-        longitude,
+        briefTitle = '',
+        description = '',
+        location,
         imageUrl = null,
         videoUrl = null,
         phoneNumber = null,
@@ -29,7 +28,7 @@ class Report {
          VALUES ($1, $2, $3, $4, $5, $6, ST_GeogFromText($7), $8, $9, $10, $11) 
          RETURNING id, user_id, event_type, severity_level, report_language, 
                    brief_title, description, image_url, video_url, phone_number, 
-                   address, created_at`,
+                   address, is_verified, created_at`,
         [
           userId,
           eventType,
@@ -37,7 +36,7 @@ class Report {
           reportLanguage,
           briefTitle,
           description,
-          `POINT(${longitude} ${latitude})`,
+          location, // Use the PostGIS location string directly
           imageUrl,
           videoUrl,
           phoneNumber,
@@ -174,7 +173,6 @@ class Report {
       let query = 'DELETE FROM reports WHERE id = $1';
       let params = [id];
 
-      // If user is not an official, they can only delete their own reports
       if (userRole !== 'official') {
         query += ' AND user_id = $2';
         params.push(userId);
@@ -186,7 +184,80 @@ class Report {
       throw error;
     }
   }
+
+  /**
+   * Find all reports with advanced filtering
+   */
+  static async findAllWithFilters(filters = {}) {
+    try {
+      let query = `
+        SELECT r.id, r.event_type, r.severity_level, r.report_language, r.brief_title, 
+               r.description, r.image_url, r.video_url, r.phone_number, r.address, 
+               r.is_verified, r.created_at, r.updated_at,
+               ST_X(r.location::geometry) as longitude,
+               ST_Y(r.location::geometry) as latitude,
+               u.email as user_email, u.role as user_role
+        FROM reports r
+        JOIN users u ON r.user_id = u.id
+        WHERE 1=1
+      `;
+      
+      const params = [];
+      let paramCount = 0;
+
+      // Severity filtering
+      if (filters.severity && filters.severity.length > 0) {
+        paramCount++;
+        query += ` AND r.severity_level = ANY($${paramCount})`;
+        params.push(filters.severity);
+      }
+
+      // Event type filtering
+      if (filters.eventType && filters.eventType.length > 0) {
+        paramCount++;
+        query += ` AND r.event_type = ANY($${paramCount})`;
+        params.push(filters.eventType);
+      }
+
+      // Time range filtering
+      if (filters.from) {
+        paramCount++;
+        query += ` AND r.created_at >= $${paramCount}`;
+        params.push(filters.from);
+      }
+
+      if (filters.to) {
+        paramCount++;
+        query += ` AND r.created_at <= $${paramCount}`;
+        params.push(filters.to);
+      }
+
+      // Status filtering (verified/unverified)
+      if (filters.status) {
+        if (filters.status === 'verified') {
+          query += ` AND r.is_verified = true`;
+        } else if (filters.status === 'unverified') {
+          query += ` AND r.is_verified = false`;
+        }
+      }
+
+      // Bounds filtering
+      if (filters.bounds) {
+        const [minLat, minLng, maxLat, maxLng] = filters.bounds.split(',').map(Number);
+        paramCount += 4;
+        query += ` AND ST_X(r.location::geometry) BETWEEN $${paramCount-3} AND $${paramCount-1}`;
+        query += ` AND ST_Y(r.location::geometry) BETWEEN $${paramCount-2} AND $${paramCount}`;
+        params.push(minLng, minLat, maxLng, maxLat);
+      }
+
+      query += ` ORDER BY r.created_at DESC`;
+
+      const result = await pool.query(query, params);
+      return result.rows;
+    } catch (error) {
+      throw error;
+    }
+  }
 }
 
 module.exports = Report;
-

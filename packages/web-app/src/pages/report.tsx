@@ -3,13 +3,25 @@ import { useRouter } from 'next/router';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNotifications } from '@/contexts/NotificationContext';
 import { useReports } from '@/contexts/ReportsContext';
+import ReportSubmissionForm from '@/components/ReportSubmissionForm';
 import DashboardLayout from '@/components/DashboardLayout';
+import Icon from '@/components/icons/Icon';
+import { Report } from '@/types';
 import { reportsAPI } from '@/utils/api';
+import { geocodeAddress, validateCoordinates } from '@/services/geocoding';
+
+// Severity options for the dropdown
+const SEVERITY_OPTIONS = [
+  { value: 'Low', label: 'Low' },
+  { value: 'Medium', label: 'Medium' },
+  { value: 'High', label: 'High' },
+  { value: 'Critical', label: 'Critical' }
+];
 
 interface HazardType {
   id: string;
   name: string;
-  icon: string;
+  iconName: string;
   description: string;
   color: string;
 }
@@ -21,6 +33,7 @@ const ReportPage: React.FC = () => {
   const { addReport } = useReports();
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | undefined>();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isGeocodingAddress, setIsGeocodingAddress] = useState(false);
   const [formData, setFormData] = useState({
     event_type: '',
     severity_level: 'Medium',
@@ -37,56 +50,56 @@ const ReportPage: React.FC = () => {
     {
       id: 'tsunami',
       name: 'Tsunami',
-      icon: '🌊',
+      iconName: 'alert-triangle',
       description: 'Large ocean waves caused by seismic activity',
       color: 'bg-red-500'
     },
     {
       id: 'storm-surge',
       name: 'Storm Surge',
-      icon: '💨',
+      iconName: 'warning',
       description: 'Rise in sea level due to storm conditions',
       color: 'bg-orange-500'
     },
     {
       id: 'high-waves',
       name: 'High Waves',
-      icon: '🌊',
+      iconName: 'warning',
       description: 'Unusually large waves affecting coastal areas',
       color: 'bg-yellow-500'
     },
     {
       id: 'swell-surge',
       name: 'Swell Surge',
-      icon: '📈',
+      iconName: 'info',
       description: 'Long-period waves causing coastal flooding',
       color: 'bg-blue-500'
     },
     {
       id: 'coastal-current',
       name: 'Coastal Current',
-      icon: '⚡',
+      iconName: 'warning',
       description: 'Strong nearshore currents',
       color: 'bg-purple-500'
     },
     {
       id: 'coastal-flooding',
       name: 'Coastal Flooding',
-      icon: '💧',
+      iconName: 'info',
       description: 'Water overflowing onto normally dry coastal land',
       color: 'bg-cyan-500'
     },
     {
       id: 'coastal-damage',
       name: 'Coastal Damage',
-      icon: '⚠️',
+      iconName: 'danger',
       description: 'Physical damage to coastal infrastructure',
       color: 'bg-red-600'
     },
     {
       id: 'unusual-tide',
       name: 'Unusual Tide',
-      icon: '🌊',
+      iconName: 'clock',
       description: 'Abnormal tidal behavior or levels',
       color: 'bg-green-500'
     }
@@ -166,6 +179,42 @@ const ReportPage: React.FC = () => {
     }
   };
 
+  const handleGeocodeAddress = async () => {
+    if (!formData.address.trim()) {
+      addNotification({
+        type: 'error',
+        title: 'Address Required',
+        message: 'Please enter an address to geocode.',
+      });
+      return;
+    }
+
+    setIsGeocodingAddress(true);
+    try {
+      const result = await geocodeAddress(formData.address);
+      setFormData(prev => ({
+        ...prev,
+        latitude: result.latitude.toString(),
+        longitude: result.longitude.toString(),
+        address: result.address, // Use the formatted address from geocoding
+      }));
+      
+      addNotification({
+        type: 'success',
+        title: 'Address Found',
+        message: 'Location coordinates have been set from the address.',
+      });
+    } catch (error: any) {
+      addNotification({
+        type: 'error',
+        title: 'Geocoding Failed',
+        message: error.message || 'Could not find coordinates for this address.',
+      });
+    } finally {
+      setIsGeocodingAddress(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -200,20 +249,12 @@ const ReportPage: React.FC = () => {
       return;
     }
 
-    if (lat < -90 || lat > 90) {
+    // Validate coordinates are within reasonable bounds for India
+    if (!validateCoordinates(lat, lng)) {
       addNotification({
         type: 'error',
         title: 'Validation Error',
-        message: 'Latitude must be between -90 and 90 degrees.',
-      });
-      return;
-    }
-
-    if (lng < -180 || lng > 180) {
-      addNotification({
-        type: 'error',
-        title: 'Validation Error',
-        message: 'Longitude must be between -180 and 180 degrees.',
+        message: 'Coordinates appear to be outside India. Please check your location.',
       });
       return;
     }
@@ -222,9 +263,14 @@ const ReportPage: React.FC = () => {
     try {
       const newReport = await reportsAPI.createReport({
         event_type: formData.event_type,
+        severity_level: formData.severity_level,
+        report_language: formData.report_language,
+        brief_title: formData.brief_title,
         description: formData.description,
         latitude: lat,
         longitude: lng,
+        phone_number: formData.phone_number,
+        address: formData.address,
       });
       
       // Add the new report to the global state for real-time updates
@@ -314,7 +360,9 @@ const ReportPage: React.FC = () => {
                     }`}
                   >
                     <div className="text-center">
-                      <div className="text-2xl mb-2">{hazard.icon}</div>
+                      <div className="flex justify-center mb-2">
+                        <Icon name={hazard.iconName as any} size={24} className="text-gray-600" />
+                      </div>
                       <h3 className="font-medium text-gray-900 text-sm">{hazard.name}</h3>
                       <p className="text-xs text-gray-600 mt-1">{hazard.description}</p>
                     </div>
@@ -332,10 +380,11 @@ const ReportPage: React.FC = () => {
                 onChange={handleInputChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
-                <option value="Low">Low - Minimal risk</option>
-                <option value="Medium">Medium - Moderate risk</option>
-                <option value="High">High - Significant risk</option>
-                <option value="Critical">Critical - Life-threatening</option>
+                {SEVERITY_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -412,18 +461,41 @@ const ReportPage: React.FC = () => {
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Or enter address manually</label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    name="address"
-                    value={formData.address}
-                    onChange={handleInputChange}
-                    placeholder="Enter address or landmark"
-                    className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                  <svg className="absolute right-3 top-2.5 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
+                <div className="flex space-x-2">
+                  <div className="relative flex-1">
+                    <input
+                      type="text"
+                      name="address"
+                      value={formData.address}
+                      onChange={handleInputChange}
+                      placeholder="Enter address or landmark"
+                      className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                    <svg className="absolute right-3 top-2.5 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleGeocodeAddress}
+                    disabled={isGeocodingAddress || !formData.address.trim()}
+                    className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white rounded-lg transition-colors flex items-center"
+                  >
+                    {isGeocodingAddress ? (
+                      <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                    ) : (
+                      <>
+                        <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        Find
+                      </>
+                    )}
+                  </button>
                 </div>
               </div>
 
